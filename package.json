@@ -1,0 +1,12 @@
+{
+    "name": "trytypespec",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "build": "npx tsp compile ./specs"
+    },
+    "devDependencies": {
+        "@typespec/compiler": "0.59.1",
+        "@typespec/json-schema": "0.59.0"
+    }
+}
