@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "private": true,
     "scripts": {
-        "build": "npx tsp compile ./specs"
+        "build": "npx tsp compile ."
     },
     "devDependencies": {
         "@typespec/compiler": "0.59.1",
