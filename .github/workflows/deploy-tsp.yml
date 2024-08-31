@@ -1,0 +1,87 @@
+name: Deploy typespec's file
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  set-version:
+    if: ${{ github.ref_type == 'branch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v4
+
+      # https://github.com/actions/setup-node
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Decide version
+        id: meta
+        run: |
+          version=$(date +%Y.%m.%d)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set version
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: npm version "$VERSION" --allow-same-version --no-git-tag-version
+
+      # https://github.com/tshion/apply-git-user
+      - uses: tshion/apply-git-user@2.0.3
+        with:
+          user: github-actions
+
+      - name: Git push
+        env:
+          MESSAGE: "Update ${{ steps.meta.outputs.version }}"
+        run: |
+          git add package.json
+          git add package-lock.json
+          git commit --message "$MESSAGE"
+          git push origin
+
+
+  compile:
+    needs: set-version
+    uses: ./.github/workflows/compile-tsp.yml
+
+
+  create-release:
+    needs:
+      - set-version
+      - compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v4
+
+      # https://github.com/actions/download-artifact
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: ./
+
+      - name: Create draft release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.set-version.outputs.version }}
+          ZIP_NAME: "JSON_Schema_${{ needs.set-version.outputs.version }}"
+        run: |
+          zip -X -r "$ZIP_NAME" ./dist
+
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          gh release create "$VERSION" "$ZIP_NAME" --draft --generate-notes --title "$VERSION"
