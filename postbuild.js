@@ -68,7 +68,7 @@ const path = require('path');
 
     // 出力
     fs.writeFileSync(
-        path.join(rootPath, 'dist', 'defaults.json'),
+        path.join(rootPath, 'dist', '@typespec', 'defaults.json'),
         JSON.stringify(data),
         { encoding: 'utf-8' },
     )

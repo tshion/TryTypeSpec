@@ -71,16 +71,17 @@ jobs:
       # https://github.com/actions/download-artifact
       - uses: actions/download-artifact@v4
         with:
-          merge-multiple: true
+          name: json-schema
           path: ./
 
       - name: Create draft release notes
+        working-directory: ./json-schema
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.set-version.outputs.version }}
-          ZIP_NAME: "JSON_Schema_${{ needs.set-version.outputs.version }}"
+          ZIP_NAME: "json-schema_${{ needs.set-version.outputs.version }}"
         run: |
-          zip -X -r "$ZIP_NAME" ./dist
+          zip -X -r "$ZIP_NAME" .
 
           git tag "$VERSION"
           git push origin "$VERSION"
