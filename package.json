@@ -1,6 +1,6 @@
 {
     "name": "trytypespec",
-    "version": "0.0.1",
+    "version": "2024.8.31",
     "private": true,
     "scripts": {
         "build": "npx tsp compile .",
