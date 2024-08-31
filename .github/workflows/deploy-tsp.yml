@@ -8,14 +8,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  set-version:
+  compile:
     if: ${{ github.ref_type == 'branch' }}
+    uses: ./.github/workflows/compile-tsp.yml
+
+
+  create-release:
+    needs: compile
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write
-    outputs:
-      version: ${{ steps.meta.outputs.version }}
     steps:
       # https://github.com/actions/checkout
       - uses: actions/checkout@v4
@@ -27,64 +30,51 @@ jobs:
           cache: npm
           cache-dependency-path: ./package-lock.json
 
-      - name: Decide version
-        id: meta
-        run: |
-          version=$(date +%Y.%m.%d)
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Set version
-        env:
-          VERSION: ${{ steps.meta.outputs.version }}
-        run: npm version "$VERSION" --allow-same-version --no-git-tag-version
-
-      # https://github.com/tshion/apply-git-user
-      - uses: tshion/apply-git-user@2.0.3
-        with:
-          user: github-actions
-
-      - name: Git push
-        env:
-          MESSAGE: "Update ${{ steps.meta.outputs.version }}"
-        run: |
-          git add package.json
-          git add package-lock.json
-          git commit --message "$MESSAGE"
-          git push origin
-
-
-  compile:
-    needs: set-version
-    uses: ./.github/workflows/compile-tsp.yml
-
-
-  create-release:
-    needs:
-      - set-version
-      - compile
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-    steps:
-      # https://github.com/actions/checkout
-      - uses: actions/checkout@v4
-
       # https://github.com/actions/download-artifact
       - uses: actions/download-artifact@v4
         with:
           name: json-schema
           path: ./dist
 
+      - name: Decide version
+        id: meta
+        run: |
+          version=$(date +%Y.%m.%d)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Zip file
+        id: zip
+        working-directory: ./dist
+        env:
+          ZIP_NAME: "json-schema_${{ steps.meta.outputs.version }}.zip"
+        run: |
+          zip -X -r "$ZIP_NAME" .
+          echo "name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+
+      # https://github.com/tshion/apply-git-user
+      - uses: tshion/apply-git-user@2.0.3
+        with:
+          user: github-actions
+
+      - name: Set version
+        env:
+          MESSAGE: "Update ${{ steps.meta.outputs.version }}"
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          npm version "$VERSION" --allow-same-version --no-git-tag-version
+
+          git add package.json
+          git add package-lock.json
+          git commit --message "$MESSAGE"
+          git push origin
+
       - name: Create draft release notes
         working-directory: ./dist
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.set-version.outputs.version }}
-          ZIP_NAME: "json-schema_${{ needs.set-version.outputs.version }}.zip"
+          VERSION: ${{ steps.meta.outputs.version }}
+          ZIP_NAME: ${{ steps.zip.outputs.name }}
         run: |
-          zip -X -r "$ZIP_NAME" .
-
           git tag "$VERSION"
           git push origin "$VERSION"
-          gh release create "$VERSION" "$ZIP_NAME" --draft --generate-notes --title "$VERSION"
+          gh release create "$VERSION" "$ZIP_NAME" --generate-notes --title "$VERSION"
