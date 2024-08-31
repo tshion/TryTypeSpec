@@ -28,4 +28,7 @@ model TextSample {
 
     /** メッセージの一覧 */
     messageList: string[] = #["Hello World!", "Good night!"];
+
+    /** URL */
+    url: url = "https://github.com/tshion";
 }

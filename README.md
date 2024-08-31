@@ -23,4 +23,4 @@ npm run build
 ## Notes
 ### 型の決め方
 * signed のものを採用する
-* 数値型は `float64`, `int64` にする
+* 数値型は `float64`, `int32` にする
