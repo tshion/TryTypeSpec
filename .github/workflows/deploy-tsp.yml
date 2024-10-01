@@ -52,7 +52,7 @@ jobs:
           echo "name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
 
       # https://github.com/tshion/apply-git-user
-      - uses: tshion/apply-git-user@2.0.4
+      - uses: tshion/apply-git-user@2.0.5
         with:
           user: github-actions
 
