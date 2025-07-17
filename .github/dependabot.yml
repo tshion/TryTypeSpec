@@ -10,9 +10,13 @@ updates:
     schedule:
       interval: "weekly"
       day: "tuesday"
+    reviewers:
+      - "tshion"
 
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "tuesday"
+    reviewers:
+      - "tshion"
