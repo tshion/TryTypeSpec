@@ -8,6 +8,6 @@
     },
     "devDependencies": {
         "@typespec/compiler": "1.2.1",
-        "@typespec/json-schema": "0.67.1"
+        "@typespec/json-schema": "1.2.1"
     }
 }
