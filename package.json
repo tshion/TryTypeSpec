@@ -7,7 +7,7 @@
         "postbuild": "node postbuild.js"
     },
     "devDependencies": {
-        "@typespec/compiler": "1.7.1",
+        "@typespec/compiler": "1.8.0",
         "@typespec/json-schema": "1.8.0"
     }
 }
